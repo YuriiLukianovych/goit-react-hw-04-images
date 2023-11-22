@@ -22,7 +22,7 @@ function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (searchQuery === '' || searchQuery === null) {
+    if (!searchQuery) {
       return;
     }
 

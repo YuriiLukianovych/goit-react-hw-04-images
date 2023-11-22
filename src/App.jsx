@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import css from './App.module.scss';
 import Header from 'components/Header';
 import Footer from 'components/Footer';
@@ -9,151 +9,115 @@ import Modal from 'components/Modal';
 import fetchImages from './services/api';
 import Notification from 'components/Notification';
 
-export default class App extends Component {
-  state = {
-    isModalVisible: false,
-    isLoading: false,
-    galleryList: null,
-    selectedImageURL: null,
-    searchQuery: null,
-    page: 1,
-    totalHits: 0,
-    error: null,
-  };
+import React from 'react';
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      (this.state.searchQuery &&
-        prevState.searchQuery !== this.state.searchQuery) ||
-      prevState.page !== this.state.page
-    ) {
-      this.getImages();
+function App() {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [galleryList, setGalleryList] = useState(null);
+  const [selectedImageURL, setSelectedImageURL] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (searchQuery === '' || searchQuery === null) {
+      return;
     }
-  }
 
-  openModal = largeImageURL => {
-    this.setState({
-      isModalVisible: true,
-      selectedImageURL: largeImageURL,
-    });
+    getImages();
+  }, [searchQuery, page]);
+
+  const openModal = largeImageURL => {
+    setIsModalVisible(true);
+    setSelectedImageURL(largeImageURL);
   };
 
-  closeModal = () => {
-    this.setState({
-      isModalVisible: false,
-      selectedImageURL: null,
-    });
+  const closeModal = () => {
+    setIsModalVisible(false);
+    setSelectedImageURL(null);
   };
 
-  getImages = async () => {
-    const { searchQuery, page, galleryList } = this.state;
-
+  const getImages = async () => {
     try {
-      this.setState({
-        isLoading: true,
-      });
+      setIsLoading(true);
       const images = await fetchImages(searchQuery, page);
 
       if (galleryList) {
-        this.setState(prevState => {
-          return {
-            galleryList: [...prevState.galleryList, ...images.hits],
-            totalHits: images.totalHits,
-          };
-        });
+        setGalleryList(s => [...s, ...images.hits]);
+        setTotalHits(images.totalHits);
       } else {
-        this.setState({
-          galleryList: images.hits,
-          totalHits: images.totalHits,
-        });
+        setGalleryList(images.hits);
+        setTotalHits(images.totalHits);
       }
     } catch (error) {
-      this.setState({
-        error,
-      });
+      setError(error);
     } finally {
-      this.setState({
-        isLoading: false,
-      });
+      setIsLoading(false);
     }
   };
 
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
     const searchQueryInput = e.target.elements.search.value;
 
-    if (this.state.searchQuery === searchQueryInput) {
+    if (searchQuery === searchQueryInput) {
       return;
     }
-    this.setState({
-      searchQuery: searchQueryInput,
-      galleryList: null,
-      page: 1,
-      error: null,
-    });
+
+    setSearchQuery(searchQueryInput);
+    setGalleryList(null);
+    setPage(1);
+    setError(null);
 
     // e.target.reset();
   };
 
-  loadMore = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const loadMore = () => {
+    setPage(s => s + 1);
   };
 
-  render() {
-    const {
-      totalHits,
-      page,
-      galleryList,
-      error,
-      isLoading,
-      isModalVisible,
-      selectedImageURL,
-    } = this.state;
+  const isLoadMoreButtonVisible = page < Math.ceil(totalHits / 12);
+  const areImages = galleryList && galleryList.length ? true : false;
+  const nothingFound = galleryList && galleryList.length === 0;
 
-    const isLoadMoreButtonVisible = page < Math.ceil(totalHits / 12);
-    const areImages = galleryList && galleryList.length ? true : false;
-    const nothingFound = galleryList && galleryList.length === 0;
+  return (
+    <div className={css.app}>
+      <Header handleSubmit={handleSubmit} />
+      <div className={css.appBody}>
+        <div className={`${css.container} container`}>
+          {/* Image Gallery */}
+          {areImages && !error && (
+            <ImageGallery images={galleryList} onOpenModal={openModal} />
+          )}
 
-    return (
-      <div className={css.app}>
-        <Header handleSubmit={this.handleSubmit} />
-        <div className={css.appBody}>
-          <div className={`${css.container} container`}>
-            {/* Image Gallery */}
-            {areImages && !error && (
-              <ImageGallery images={galleryList} onOpenModal={this.openModal} />
-            )}
+          {/* Error Div */}
+          {error && <Notification status="error" message={error.message} />}
 
-            {/* Error Div */}
-            {error && <Notification status="error" message={error.message} />}
+          {/* Nothing Found */}
+          {nothingFound && (
+            <Notification
+              status="warning"
+              message="Nothing was found for your request. Please enter another request."
+            />
+          )}
 
-            {/* Nothing Found */}
-            {nothingFound && (
-              <Notification
-                status="warning"
-                message="Nothing was found for your request. Please enter another request."
-              />
-            )}
+          {/* Loader */}
+          {isLoading && <Loader />}
 
-            {/* Loader */}
-            {isLoading && <Loader />}
-
-            {/* Button */}
-            {areImages && !error && (
-              <Button
-                onClick={this.loadMore}
-                disabled={!isLoadMoreButtonVisible}
-              />
-            )}
-          </div>
+          {/* Button */}
+          {areImages && !error && (
+            <Button onClick={loadMore} disabled={!isLoadMoreButtonVisible} />
+          )}
         </div>
-        <Footer />
-        {isModalVisible && (
-          <Modal imageURL={selectedImageURL} onCloseModal={this.closeModal} />
-        )}
       </div>
-    );
-  }
+      <Footer />
+      {isModalVisible && (
+        <Modal imageURL={selectedImageURL} onCloseModal={closeModal} />
+      )}
+    </div>
+  );
 }
+
+export default App;

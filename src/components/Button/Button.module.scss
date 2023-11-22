@@ -1,0 +1,26 @@
+.btn {
+  border-radius: 4px;
+  outline: none;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  transition: 300ms;
+  line-height: 1;
+  background-color: #7b2f3d;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover,
+  &:focus {
+    background-color: #701c2b;
+  }
+  &:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: auto;
+  }
+}

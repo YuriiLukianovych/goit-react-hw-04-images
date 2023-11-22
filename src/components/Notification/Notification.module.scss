@@ -1,0 +1,18 @@
+.notification {
+  width: 100%;
+  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+
+  padding: 12px;
+  border-radius: 6px;
+}
+.error {
+  border: 1px solid red;
+  background-color: tomato;
+}
+.warning {
+  border: 1px solid var(--yellow);
+  background-color: var(--accent2);
+}

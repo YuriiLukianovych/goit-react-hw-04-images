@@ -10,19 +10,19 @@ function Modal({ imageURL, onCloseModal }) {
     }
   };
 
-  const onEscapeKeyPress = e => {
-    if (e.key === 'Escape') {
-      onCloseModal();
-    }
-  };
-
   useEffect(() => {
+    const onEscapeKeyPress = e => {
+      if (e.key === 'Escape') {
+        onCloseModal();
+      }
+    };
+
     window.addEventListener('keydown', onEscapeKeyPress);
 
     return () => {
       window.removeEventListener('keydown', onEscapeKeyPress);
     };
-  }, []);
+  }, [onCloseModal]);
 
   return (
     <div className={css.overlay} onClick={onOverlayClick}>

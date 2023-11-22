@@ -14,7 +14,7 @@ import React from 'react';
 function App() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [galleryList, setGalleryList] = useState(null);
+  const [galleryList, setGalleryList] = useState([]);
   const [selectedImageURL, setSelectedImageURL] = useState(null);
   const [searchQuery, setSearchQuery] = useState(null);
   const [page, setPage] = useState(1);
@@ -25,6 +25,20 @@ function App() {
     if (!searchQuery) {
       return;
     }
+
+    const getImages = async () => {
+      try {
+        setIsLoading(true);
+        const images = await fetchImages(searchQuery, page);
+
+        setGalleryList(s => [...s, ...images.hits]);
+        setTotalHits(images.totalHits);
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     getImages();
   }, [searchQuery, page]);
@@ -39,25 +53,6 @@ function App() {
     setSelectedImageURL(null);
   };
 
-  const getImages = async () => {
-    try {
-      setIsLoading(true);
-      const images = await fetchImages(searchQuery, page);
-
-      if (galleryList) {
-        setGalleryList(s => [...s, ...images.hits]);
-        setTotalHits(images.totalHits);
-      } else {
-        setGalleryList(images.hits);
-        setTotalHits(images.totalHits);
-      }
-    } catch (error) {
-      setError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = e => {
     e.preventDefault();
     const searchQueryInput = e.target.elements.search.value;
@@ -67,7 +62,7 @@ function App() {
     }
 
     setSearchQuery(searchQueryInput);
-    setGalleryList(null);
+    setGalleryList([]);
     setPage(1);
     setError(null);
 
@@ -79,8 +74,8 @@ function App() {
   };
 
   const isLoadMoreButtonVisible = page < Math.ceil(totalHits / 12);
-  const areImages = galleryList && galleryList.length ? true : false;
-  const nothingFound = galleryList && galleryList.length === 0;
+  const areImages = galleryList.length ? true : false;
+  const nothingFound = !totalHits && searchQuery && !isLoading;
 
   return (
     <div className={css.app}>
